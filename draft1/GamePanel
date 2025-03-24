@@ -1,0 +1,312 @@
+package main;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+
+public class GamePanel extends JPanel implements Runnable {
+
+    final int originalTileSize = 16;
+    final int scale = 3;
+    final int tileSize = originalTileSize * scale;
+    final int maxScreenCol = 16;
+    final int maxScreenRow = 12;
+    final int screenWidth = tileSize * maxScreenCol;
+    final int screenHeight = tileSize * maxScreenRow;
+
+    Thread gameThread;
+    Kamadan kamadan;
+    Minion minion;
+    boolean left, right;
+
+    int kingdom = 1; // Track current kingdom
+    Image background1, background2, background3;
+
+    // Skill icons
+    private Image skillIcon1, skillIcon2, skillIcon3;
+
+    // Movement variables
+    private boolean isAttacking = false;
+
+    public GamePanel(JFrame window) {
+        this.setPreferredSize(Toolkit.getDefaultToolkit().getScreenSize());
+        this.setBackground(Color.black);
+        this.setDoubleBuffered(true);
+
+        kamadan = new Kamadan();
+        minion = new Minion(); // Add minion instance
+
+        // Set initial health values
+        kamadan.health = 500; // Full health for Kamadan
+        minion.health = 100; // Full health for Minion Boozy
+
+        KeyHandler keyHandler = new KeyHandler(this);
+        this.addKeyListener(keyHandler);
+        this.setFocusable(true);
+
+        loadBackgrounds();
+        loadSkillIcons(); // Load skill icons
+
+        // Add mouse listener for skill icons
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                handleSkillClick(e.getX(), e.getY());
+            }
+        });
+
+        window.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        window.setUndecorated(true);
+    }
+
+    private void loadBackgrounds() {
+        try {
+            background1 = ImageIO.read(getClass().getResource("/res/characters/kingdom1.png"));
+            background2 = ImageIO.read(getClass().getResource("/res/characters/kingdom2.png"));
+            background3 = ImageIO.read(getClass().getResource("/res/characters/kingdom3.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadSkillIcons() {
+        try {
+            skillIcon1 = ImageIO.read(getClass().getResource("/res/characters/syntax_sleuth.png"));
+            skillIcon2 = ImageIO.read(getClass().getResource("/res/characters/logic_master.png"));
+            skillIcon3 = ImageIO.read(getClass().getResource("/res/characters/loop_ninja.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g;
+
+        // Draw the correct background based on the current kingdom
+        switch (kingdom) {
+            case 1:
+                g2.drawImage(background1, 0, 0, getWidth(), getHeight(), null);
+                // Draw Minion only in Kingdom 1
+                minion.draw(g2, screenHeight);
+                break;
+            case 2:
+                g2.drawImage(background2, 0, 0, getWidth(), getHeight(), null);
+                break;
+            case 3:
+                g2.drawImage(background3, 0, 0, getWidth(), getHeight(), null);
+                break;
+        }
+
+        // Draw Kamadan in all kingdoms
+        kamadan.draw(g2, screenHeight);
+
+        // Draw skill icons
+        drawSkillIcons(g2);
+
+        // Draw Kamadan's stats
+        drawKamadanStats(g2);
+        drawMinionBoozyStats(g2);
+
+        // Draw portal
+        g2.setColor(Color.WHITE);
+        g2.fillRect(0, (screenHeight / 2) - 50, 50, 100); // Portal at the leftmost center
+
+        g2.dispose();
+    }
+
+    private void drawSkillIcons(Graphics2D g2) {
+        // Draw skill icons at specific positions
+        g2.drawImage(skillIcon1, 1600, screenHeight - 150, 170, 170, null); // Syntax Sleuth
+        g2.drawImage(skillIcon2, 1400, screenHeight - 100, 170, 170, null); // Logic Master
+        g2.drawImage(skillIcon3, 1200, screenHeight - 230, 170, 170, null); // Loop Ninja
+    }
+
+    private void drawKamadanStats(Graphics2D g2) {
+        g2.setColor(Color.WHITE); // Set text color
+        g2.setFont(new Font("Arial", Font.BOLD, 28)); // Set font and size
+
+        // Draw Kamadan's name
+        g2.drawString("Kamadan", 50, 60); // Position for Kamadan's name
+
+        // Draw health label and bar
+        g2.drawString("Health:", 50, 100); // Position for health label
+        g2.setColor(Color.RED);
+        g2.fillRect(50, 110, 500, 30); // Background for health bar (set to 500 pixels wide)
+        g2.setColor(Color.GREEN);
+        g2.fillRect(50, 110, (int) (500 * ((double) kamadan.health / 500)), 30); // Health bar (adjusted for 500 max)
+
+        // Draw mana label and bar with red background
+        g2.setColor(Color.WHITE);
+        g2.drawString("Mana:", 50, 180); // Adjusted y-coordinate for mana label
+        g2.setColor(Color.RED);
+        g2.fillRect(50, 190, 500, 30); // Red background for mana bar
+        g2.setColor(Color.CYAN);
+        g2.fillRect(50, 190, (int) (500 * ((double) kamadan.mana / 200)), 30); // Mana bar
+
+        // Reset color for other drawings
+        g2.setColor(Color.WHITE);
+    }
+
+    private void drawMinionBoozyStats(Graphics2D g2) {
+        g2.setColor(Color.WHITE); // Set text color
+        g2.setFont(new Font("Arial", Font.BOLD, 28)); // Set font and size
+
+        g2.drawString("Minion Boozy", 1690, 60); // Position for Minion's name
+
+        // Draw health label and bar
+        g2.drawString("Health:", 1780, 100); // Position for health label
+        g2.setColor(Color.RED);
+        g2.fillRect(1370, 110, 500, 30); // Background for health bar (set to 500 pixels wide)
+        g2.setColor(Color.GREEN);
+        g2.fillRect(1370, 110, (int) (500 * ((double) minion.health / 100)), 30); // Health bar (adjusted for 100 max)
+
+        // Remove mana label and bar for Minion Boozy
+    }
+
+    private void handleSkillClick(int mouseX, int mouseY) {
+        // Check if the mouse click is within the bounds of the skill icons
+        if (mouseX >= 1600 && mouseX <= 1770 && mouseY >= screenHeight - 150 && mouseY <= screenHeight - 150 + 170) {
+            // Syntax Sleuth clicked
+            performAttack(1);
+        } else if (mouseX >= 1400 && mouseX <= 1570 && mouseY >= screenHeight - 100 && mouseY <= screenHeight - 100 + 170) {
+            // Logic Master clicked
+            performAttack(2);
+        } else if (mouseX >= 1200 && mouseX <= 1370 && mouseY >= screenHeight - 230 && mouseY <= screenHeight - 230 + 170) {
+            // Loop Ninja clicked
+            performAttack(3);
+        }
+    }
+
+    private void performAttack(int skillChoice) {
+        isAttacking = true; // Start the attack sequence
+        int damage = kamadan.attack(skillChoice);
+        kamadan.mana -= 20; // Subtract mana for Kamadan's attack
+
+        // Move Kamadan towards Minion Boozy
+        new Thread(() -> {
+            for (int i = 0; i < 150; i++) { // Move closer to Minion
+                kamadan.x += 2; // Move right faster
+                try {
+                    Thread.sleep(5); // Control speed of movement
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // Attack Minion Boozy
+            minion.health -= damage;
+
+            // Move Kamadan back to original position
+            for (int i = 0; i < 150; i++) {
+                kamadan.x -= 2; // Move back to original position faster
+                try {
+                    Thread.sleep(8);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // Wait for a short time before Minion Boozy retaliates
+            try {
+                Thread.sleep(500); // Wait for 0.5 seconds
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // Move Minion Boozy towards Kamadan
+            for (int i = 0; i < 150; i++) { // Move towards Kamadan
+                minion.x -= 2; // Move left faster
+                try {
+                    Thread.sleep(5); // Control speed of movement
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // Minion Boozy attacks Kamadan
+            int minionDamage = minion.attack();
+            kamadan.health -= minionDamage;
+
+            // Move Minion Boozy back to original position
+            for (int i = 0; i < 150; i++) {
+                minion.x += 2; // Move back to original position faster
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            isAttacking = false; // End the attack sequence
+        }).start();
+    }
+
+    public void startGameThread() {
+        gameThread = new Thread(this);
+        gameThread.start();
+    }
+
+    @Override
+    public void run() {
+        double drawInterval = 1000000000 / 60;
+        double nextDrawTime = System.nanoTime() + drawInterval;
+
+        while (gameThread != null) {
+            update();
+            repaint();
+
+            try {
+                double remainingTime = nextDrawTime - System.nanoTime();
+                remainingTime /= 1000000;
+
+                if (remainingTime < 0) {
+                    remainingTime = 0;
+                }
+
+                Thread.sleep((long) remainingTime);
+                nextDrawTime += drawInterval;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void update() {
+        if (!isAttacking) {
+            kamadan.update(left, right);
+        }
+        checkPortalCollision();
+        checkForDefeat();
+    }
+
+    private void checkPortalCollision() {
+        if (kamadan.x <= 0) { // If Kamadan reaches the leftmost side
+            if (kingdom < 3) { // Move to the next kingdom
+                kingdom++;
+                kamadan.x = screenWidth - 100; // Move Kamadan to the rightmost side after transition
+            }
+        } else if (kamadan.x >= screenWidth - 50) { // If Kamadan reaches the rightmost side
+            if (kingdom > 1) { // Move to the previous kingdom
+                kingdom--;
+                kamadan.x = 50; // Move Kamadan to the leftmost side after transition
+            }
+        }
+    }
+
+    private void checkForDefeat() {
+        if (kamadan.health <= 0) {
+            JOptionPane.showMessageDialog(null, "Kamadan has been defeated!");
+            System.exit(0); // End the game
+        }
+        if (minion.health <= 0) {
+            minion.health = 0; // Ensure minion health is set to 0
+            JOptionPane.showMessageDialog(null, "You have defeated the Minion!");
+            System.exit(0); // End the game
+        }
+    }
+}
