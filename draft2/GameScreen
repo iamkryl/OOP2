@@ -1,0 +1,58 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package main;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class GameScreen extends JPanel {
+    private JTextArea storyText;
+    private JButton nextButton;
+    private int storyStep = 0;
+
+    public GameScreen(GamePanel panel) { // Renamed from GameWindow to GamePanel
+        setLayout(new BorderLayout());
+
+        storyText = new JTextArea("Welcome to the ThirdStreet Kingdom...");
+        storyText.setFont(new Font("Serif", Font.PLAIN, 18));
+        storyText.setLineWrap(true);
+        storyText.setWrapStyleWord(true);
+        storyText.setEditable(false);
+
+        nextButton = new JButton("Next");
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                advanceStory();
+            }
+        });
+
+        add(new JScrollPane(storyText), BorderLayout.CENTER);
+        add(nextButton, BorderLayout.SOUTH);
+    }
+
+    private void advanceStory() {
+        String[] storySteps = {
+            "Kamadan arrives at the castle.",
+            "The kingdom is in danger!",
+            "A battle is about to begin!"
+        };
+
+        if (storyStep < storySteps.length) {
+            storyText.setText(storySteps[storyStep]);
+            storyStep++;
+        } else {
+            nextButton.setText("Start Battle!");
+            nextButton.removeActionListener(nextButton.getActionListeners()[0]); // Remove previous listener
+            nextButton.addActionListener(e -> startBattle());
+        }
+    }
+    
+    private void startBattle() {
+        JOptionPane.showMessageDialog(this, "Battle system coming soon...");
+    }
+}
