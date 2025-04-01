@@ -1,0 +1,18 @@
+package main;
+
+public class Kamadan extends Hero {
+    public Kamadan() {
+        super("Kamadan", 250, 200);
+    }
+
+    @Override
+    public int attack(int choice) {
+        int damage = 0;
+        if (choice == 1) {
+            damage = 30;
+        } else if (choice == 2) {
+            damage = 50;
+        }
+        return damage;
+    }
+}
