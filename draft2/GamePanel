@@ -1,0 +1,27 @@
+package main;
+
+import javax.swing.*;
+import java.awt.*;
+
+public class GamePanel extends JPanel {
+    private CardLayout cardLayout;
+    private JPanel mainPanel;
+
+    public GamePanel() {
+        cardLayout = new CardLayout();
+        mainPanel = new JPanel(cardLayout);
+
+        mainPanel.add(new MainMenu(this), "MainMenu");
+        mainPanel.add(new GameScreen(this), "GameScreen");
+        mainPanel.add(new BattleScreen(this), "BattleScreen");
+
+        setLayout(new BorderLayout());
+        add(mainPanel, BorderLayout.CENTER);
+
+        cardLayout.show(mainPanel, "MainMenu"); // Start with Main Menu
+    }
+
+    public void showScreen(String screenName) {
+        cardLayout.show(mainPanel, screenName);
+    }
+}
