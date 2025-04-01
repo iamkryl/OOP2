@@ -1,0 +1,92 @@
+package main;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+public class MainMenu extends JPanel {
+    private GamePanel gamePanel;
+    private Image backgroundImage;
+
+    public MainMenu(GamePanel gamePanel) {
+        this.gamePanel = gamePanel;
+
+        // Load the background image
+        backgroundImage = new ImageIcon(getClass().getResource("/res/characters/landingScreen.png")).getImage();
+
+        setLayout(new GridBagLayout()); // Use GridBagLayout for centering
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.anchor = GridBagConstraints.CENTER; // Center alignment
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Allow resizing properly
+
+        // Resize start and exit button images
+        ImageIcon startIcon = resizeImage("/res/characters/start.png", 600, 350);
+        ImageIcon startHoverIcon = resizeImage("/res/characters/start.png", 630, 380); // Enlarge on hover
+        ImageIcon exitIcon = resizeImage("/res/characters/exit.png", 600, 350);
+        ImageIcon exitHoverIcon = resizeImage("/res/characters/exit.png", 630, 380); // Enlarge on hover
+
+        // Start Game Button (Image)
+        JLabel startButton = new JLabel(startIcon);
+        startButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        startButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                gamePanel.showScreen("GameScreen");
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                startButton.setIcon(startHoverIcon);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                startButton.setIcon(startIcon);
+            }
+        });
+
+        // Exit Game Button (Image)
+        JLabel exitButton = new JLabel(exitIcon);
+        exitButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        exitButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                System.exit(0);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                exitButton.setIcon(exitHoverIcon);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                exitButton.setIcon(exitIcon);
+            }
+        });
+
+        // Proper positioning
+        gbc.gridy = 0;
+        gbc.insets = new Insets(250, 0, 0, 0); // Moves Start button way down
+        add(startButton, gbc);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(-240, 0, 0, 0); // Pulls Exit up super close to Start
+        add(exitButton, gbc);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+    }
+
+    // Method to resize images
+    private ImageIcon resizeImage(String path, int width, int height) {
+        ImageIcon icon = new ImageIcon(getClass().getResource(path));
+        Image img = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+        return new ImageIcon(img);
+    }
+}
