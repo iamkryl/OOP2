@@ -1,0 +1,40 @@
+    package main;
+
+    import javax.swing.*;
+    import java.awt.*;
+    import java.awt.event.ActionEvent;
+
+    public class BattleScreen extends JPanel {
+        private JTextArea battleLog;
+        private JButton attackButton;
+        private Kamadan player;
+        private Sloshed enemy;
+
+        public BattleScreen(GamePanel panel) {
+            player = new Kamadan();
+            enemy = new Sloshed();
+
+            setLayout(new BorderLayout());
+
+            battleLog = new JTextArea("A battle begins!");
+            battleLog.setFont(new Font("Serif", Font.PLAIN, 18));
+            battleLog.setEditable(false);
+
+            attackButton = new JButton("Attack");
+            attackButton.addActionListener((ActionEvent e) -> attackEnemy());
+
+            add(new JScrollPane(battleLog), BorderLayout.CENTER);
+            add(attackButton, BorderLayout.SOUTH);
+        }
+
+        private void attackEnemy() {
+            int damage = player.attack(1);
+            enemy.setHealth(enemy.getHealth() - damage);
+            battleLog.append("\nKamadan attacks! Enemy health: " + enemy.getHealth());
+
+            if (enemy.getHealth() <= 0) {
+                battleLog.append("\nEnemy defeated!");
+                attackButton.setEnabled(false);
+            }
+        }
+    }
